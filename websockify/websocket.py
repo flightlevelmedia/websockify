@@ -445,13 +445,13 @@ class WebSocket(object):
         self._flush()
         return len(msg)
 
-    def ping(self, data=None):
+    def ping(self, data=''.encode('ascii')):
         """Write a ping message to the WebSocket."""
-        self._sendmg(0x9, data)
+        self._sendmsg(0x9, data)
 
-    def pong(self, data=None):
+    def pong(self, data=''.encode('ascii')):
         """Write a pong message to the WebSocket."""
-        self._sendmg(0xA, data)
+        self._sendmsg(0xA, data)
 
     def shutdown(self, how, code=1000, reason=None):
         """Gracefully terminate the WebSocket connection.
