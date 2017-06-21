@@ -37,6 +37,9 @@ for mod, msg in [('ssl', 'TLS/SSL/wss is disabled'),
 if sys.platform == 'win32':
     # make sockets pickle-able/inheritable
     import multiprocessing.reduction
+    # the multiprocesssing module behaves much differently on Windows,
+    # and we have yet to fix all the bugs
+    sys.exit("Windows is not supported at this time")
 
 from websockify.websocket import WebSocket, WebSocketWantReadError, WebSocketWantWriteError
 from websockify.websocketserver import WebSocketRequestHandler
@@ -684,13 +687,15 @@ class WebSockifyServer(object):
         original_signals = {
             signal.SIGINT: signal.getsignal(signal.SIGINT),
             signal.SIGTERM: signal.getsignal(signal.SIGTERM),
-            signal.SIGCHLD: signal.getsignal(signal.SIGCHLD),
         }
+        if getattr(signal, 'SIGCHLD', None) is not None:
+            original_signals[signal.SIGCHLD] = signal.getsignal(signal.SIGCHLD),
         signal.signal(signal.SIGINT, self.do_SIGINT)
         signal.signal(signal.SIGTERM, self.do_SIGTERM)
         # make sure that _cleanup is called when children die
         # by calling active_children on SIGCHLD
-        signal.signal(signal.SIGCHLD, self.multiprocessing_SIGCHLD)
+        if getattr(signal, 'SIGCHLD', None) is not None:
+            signal.signal(signal.SIGCHLD, self.multiprocessing_SIGCHLD)
 
         last_active_time = self.launch_time
         try:
